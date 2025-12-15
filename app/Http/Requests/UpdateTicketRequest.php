@@ -1,0 +1,28 @@
+<?php
+
+namespace App\Http\Requests;
+
+use Illuminate\Foundation\Http\FormRequest;
+
+class UpdateTicketRequest extends FormRequest
+{
+    /**
+    
+     */
+    public function authorize(): bool
+    {
+        return false;
+    }
+
+    /**
+     
+     
+     * @return array<string, 
+     */
+    public function rules(): array
+    {
+        return [
+            
+        ];
+    }
+}
