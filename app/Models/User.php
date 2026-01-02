@@ -55,4 +55,14 @@ public function ticketsAssigned()
     return $this->hasMany(Ticket::class, 'assigned_to');
 }
 
+public function isAdmin(): bool
+{
+    
+    return $this->is_admin || $this->role === 'superadmin';
+}
+
+public function isSuperAdmin()
+{
+    return $this->role === 'superadmin';
+}
 }

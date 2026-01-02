@@ -16,39 +16,40 @@ class UserController extends Controller
     {
         $this->middleware('auth');
 
-        // This is correct for enabling resource policies:
+        
         $this->authorizeResource(\App\Models\User::class, 'user');
     }
 
 
     public function index(Request $request)
-    {
-        $currentUser = $request->user();
+{
+    $currentUser = $request->user();
 
-        // (Existing index logic is fine)
-        $users = User::select('id', 'name', 'email', 'is_admin', 'created_at')
-            ->latest()
-            ->paginate(10)
-            ->appends($request->query());
+    // Include 'role' in the selection to distinguish superadmin
+    $users = User::select('id', 'name', 'email', 'role', 'is_admin', 'created_at')
+        ->latest()
+        ->paginate(10)
+        ->appends($request->query());
 
-        $users->getCollection()->transform(function ($user) use ($currentUser) {
-            return [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'is_admin' => (bool) $user->is_admin,
-               
-                'can_edit' => $currentUser->can('update', $user),
-                'can_delete' => $currentUser->can('delete', $user),
-                'created_at' => $user->created_at->format('Y-m-d'),
-            ];
-        });
+    $users->getCollection()->transform(function ($user) use ($currentUser) {
+        return [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'role' => $user->role, // New: track the role string
+            'is_admin' => (bool) $user->is_admin,
+            'can_edit' => $currentUser->can('update', $user),
+            'can_delete' => $currentUser->can('delete', $user) && $user->id !== $currentUser->id,
+            'created_at' => $user->created_at->format('Y-m-d'),
+        ];
+    });
 
-        return Inertia::render('Users/Index', [
-            'users' => $users,
-        ]);
-    }
-    
+    return Inertia::render('Users/Index', [
+        'users' => $users,
+    ]);
+}
+
+
     
     public function create()
     {
@@ -58,20 +59,19 @@ class UserController extends Controller
     
     
     public function store(UserStoreRequest $request)
-    {
-       
-        $validatedData = $request->validated();
-        
-        User::create([
-            'name' => $validatedData['name'],
-            'email' => $validatedData['email'],
-            'password' => Hash::make($validatedData['password']),
-            'is_admin' => $validatedData['is_admin'] ?? false,
-        ]);
+{
+    $validatedData = $request->validated();
+    
+    User::create([
+        'name' => $validatedData['name'],
+        'email' => $validatedData['email'],
+        'password' => Hash::make($validatedData['password']),
+        'role' => $validatedData['role'] ?? 'user', // Handle the role
+        'is_admin' => $validatedData['is_admin'] ?? false,
+    ]);
 
-        return redirect()->route('users.index')
-            ->with('success', 'User created successfully.');
-    }
+    return redirect()->route('users.index')->with('success', 'User created successfully.');
+}
 
   
     public function edit(User $user)
@@ -103,11 +103,10 @@ public function destroy(User $user)
         return back()->withErrors(['error' => 'You cannot delete your own account.']);
     }
     
-  
-    
     $user->delete();
 
     return redirect()->route('users.index')
         ->with('success', 'User deleted successfully.');
 }
+
 }

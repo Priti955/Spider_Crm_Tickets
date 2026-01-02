@@ -4,7 +4,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\Admin\AdminDashboardController;
+
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TicketController;
 use App\Http\Controllers\UserController;
@@ -39,11 +39,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('tickets/{ticket}/assign', [TicketController::class, 'assign'])->name('tickets.assign');
 
     Route::resource('users', UserController::class)
-    ->only(['index', 'edit', 'update', 'destroy', 'create', 'store']);
+        ->only(['index', 'edit', 'update', 'destroy', 'create', 'store']);
 });
 
-Route::middleware(['auth', 'is_admin'])->group(function () {
-    Route::get('/admin/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
-});
-
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';

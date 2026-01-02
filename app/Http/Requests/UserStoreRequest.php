@@ -20,7 +20,7 @@ class UserStoreRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'confirmed', 'min:8'],
-            // is_admin is optional for the form, defaults to false in the controller
+            
             'is_admin' => ['sometimes', 'boolean'],
         ];
     }

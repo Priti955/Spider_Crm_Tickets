@@ -1,112 +1,163 @@
 import React, { useState } from 'react';
-import { Link, usePage, router } from '@inertiajs/react'; 
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { Link, usePage, router, Head } from '@inertiajs/react';
 
-export default function Show({ ticket, canEdit, canUpdateStatus }) {
+export default function Show({ auth, ticket, canEdit, canUpdateStatus }) {
     const { flash } = usePage().props;
     const [status, setStatus] = useState(ticket.status);
 
-    const statusColors = {
-        pending: 'bg-gray-400',
-        inprogress: 'bg-blue-400',
-        completed: 'bg-green-400',
-        onhold: 'bg-yellow-400',
+    const statusStyles = {
+        pending: 'bg-slate-500/10 text-slate-400 border-slate-500/20',
+        inprogress: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+        completed: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+        onhold: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
     };
 
     function updateStatus(e) {
         e.preventDefault();
         router.post(route('tickets.status', ticket.id), { status }, {
-             preserveScroll: true,
+            preserveScroll: true,
         });
     }
 
     return (
-        <div className="min-h-screen bg-blue-50 p-6">
-            {flash?.success && (
-                <div className="mb-4 bg-green-100 border border-green-400 text-green-800 p-4 rounded">
-                    {flash.success}
+        <AuthenticatedLayout
+            user={auth.user}
+            header={
+                <div className="flex items-center gap-4">
+                    <Link href={route('tickets.index')} className="text-slate-400 hover:text-white transition">
+                        🎫 Tickets
+                    </Link>
+                    <span className="text-slate-600">/</span>
+                    <h2 className="text-xl font-semibold text-white">Ticket Details</h2>
                 </div>
-            )}
+            }
+        >
+            <Head title={`Ticket - ${ticket.name}`} />
 
-            <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-6 space-y-6">
-                
-                {/* Header and Status Badge */}
-                <div className="flex justify-between items-center">
-                    <h1 className="text-3xl font-bold text-blue-900">{ticket.name}</h1>
-                    <span className={`px-3 py-1 rounded text-white ${statusColors[ticket.status]}`}>
-                        {ticket.status.toUpperCase()}
-                    </span>
-                </div>
-
-                {/* Metadata (The Fixed Section) */}
-                <div className="grid grid-cols-2 gap-4 text-sm text-gray-700 border-b pb-4">
-                    {/* --- FIX 1: Change ticket.user to ticket.author --- */}
-                    <p><strong>Author:</strong> {ticket.author?.name || 'N/A'}</p> 
-                    
-                    {/* --- FIX 2: Change ticket.assigned_user to ticket.assignee --- */}
-                    <p><strong>Assignee:</strong> {ticket.assignee?.name || 'Unassigned'}</p> 
-                    
-                    <p><strong>Created On:</strong> {ticket.created_at_formatted}</p>
-                    <p><strong>Last Updated:</strong> {ticket.updated_at_formatted}</p>
-                </div>
-                
-                {/* Description */}
-                <div>
-                    <h2 className="text-lg font-semibold text-blue-800 mb-2">Description</h2>
-                    <p className="p-4 rounded bg-blue-100 text-blue-900 whitespace-pre-wrap">{ticket.description || 'No description provided'}</p>
-                </div>
-
-                {/* File */}
-                {ticket.file_url && (
-                    <div>
-                        <a
-                            href={ticket.file_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-block bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded"
-                        >
-                            View File
-                        </a>
+            <div className="max-w-6xl mx-auto space-y-6">
+                {/* Flash Success Messages */}
+                {flash?.success && (
+                    <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 p-4 rounded-xl flex items-center gap-3">
+                        <span>✅</span> {flash.success}
                     </div>
                 )}
 
-                {/* Status Update (only assignee/authorized user) */}
-                {canUpdateStatus && (
-                    <form onSubmit={updateStatus} className="mt-4 flex items-center gap-3">
-                        <select
-                            value={status}
-                            onChange={e => setStatus(e.target.value)}
-                            className="p-2 border rounded"
-                        >
-                            <option value="pending">Pending</option>
-                            <option value="inprogress">In Progress</option>
-                            <option value="completed">Completed</option>
-                            <option value="onhold">On Hold</option>
-                        </select>
-                        <button type="submit" className="px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded">
-                            Update Status
-                        </button>
-                    </form>
-                )}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    
+                    {/* LEFT COLUMN: Main Ticket Content */}
+                    <div className="lg:col-span-2 space-y-6">
+                        <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+                            <div className="p-8 border-b border-slate-800 flex justify-between items-start">
+                                <div>
+                                    <h1 className="text-3xl font-bold text-white mb-2">{ticket.name}</h1>
+                                    <p className="text-slate-500 text-sm italic">Created on {ticket.created_at_formatted}</p>
+                                </div>
+                                <span className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase border ${statusStyles[ticket.status]}`}>
+                                    {ticket.status}
+                                </span>
+                            </div>
 
-                {/* Actions */}
-                <div className="mt-6 flex gap-3">
-                    <Link
-                        href={route('tickets.index')}
-                        className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-900 rounded"
-                    >
-                        Back to Tickets
-                    </Link>
+                            <div className="p-8">
+                                <h3 className="text-slate-300 font-semibold mb-4 uppercase tracking-widest text-xs">Description</h3>
+                                <div className="bg-slate-950 border border-slate-800 p-6 rounded-xl text-slate-300 leading-relaxed whitespace-pre-wrap">
+                                    {ticket.description || 'No description provided.'}
+                                </div>
 
-                    {canEdit && (
-                        <Link
-                            href={route('tickets.edit', ticket.id)}
-                            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded"
-                        >
-                            Edit Ticket
-                        </Link>
-                    )}
+                                {ticket.file_url && (
+                                    <div className="mt-8 pt-8 border-t border-slate-800">
+                                        <h3 className="text-slate-300 font-semibold mb-4 uppercase tracking-widest text-xs">Attachment</h3>
+                                        <a
+                                            href={ticket.file_url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-flex items-center gap-2 bg-indigo-600/10 border border-indigo-500/20 text-indigo-400 hover:bg-indigo-600 hover:text-white px-6 py-3 rounded-xl transition font-medium"
+                                        >
+                                            📎 View Attachment
+                                        </a>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Back Action */}
+                        <div className="flex gap-4">
+                            <Link
+                                href={route('tickets.index')}
+                                className="text-slate-500 hover:text-white transition flex items-center gap-2 text-sm"
+                            >
+                                ← Back to List
+                            </Link>
+                        </div>
+                    </div>
+
+                    {/* RIGHT COLUMN: Sidebar Metadata & Controls */}
+                    <div className="space-y-6">
+                        {/* Info Card */}
+                        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
+                            <div>
+                                <label className="text-xs font-bold text-slate-500 uppercase">Author</label>
+                                <p className="text-slate-200 mt-1 flex items-center gap-2">
+                                    <span className="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400 text-xs">
+                                        {ticket.author?.name?.charAt(0)}
+                                    </span>
+                                    {ticket.author?.name || 'N/A'}
+                                </p>
+                            </div>
+
+                            <div>
+                                <label className="text-xs font-bold text-slate-500 uppercase">Assignee</label>
+                                <p className="text-slate-200 mt-1 flex items-center gap-2">
+                                    <span className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-xs">
+                                        👤
+                                    </span>
+                                    {ticket.assignee?.name || 'Unassigned'}
+                                </p>
+                            </div>
+
+                            <div className="pt-4 border-t border-slate-800">
+                                <label className="text-xs font-bold text-slate-500 uppercase">Last Updated</label>
+                                <p className="text-slate-400 text-sm mt-1">{ticket.updated_at_formatted}</p>
+                            </div>
+                        </div>
+
+                        {/* Status Update Card */}
+                        {canUpdateStatus && (
+                            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl border-t-4 border-t-indigo-500">
+                                <h3 className="text-white font-medium mb-4">Quick Status Update</h3>
+                                <form onSubmit={updateStatus} className="space-y-4">
+                                    <select
+                                        value={status}
+                                        onChange={e => setStatus(e.target.value)}
+                                        className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 focus:ring-indigo-500"
+                                    >
+                                        <option value="pending">🟡 Pending</option>
+                                        <option value="inprogress">🔵 In Progress</option>
+                                        <option value="completed">🟢 Completed</option>
+                                        <option value="onhold">🔴 On Hold</option>
+                                    </select>
+                                    <button 
+                                        type="submit" 
+                                        className="w-full py-2.5 bg-indigo-600 text-white rounded-lg font-bold hover:bg-indigo-500 transition shadow-lg shadow-indigo-600/20"
+                                    >
+                                        Update Ticket
+                                    </button>
+                                </form>
+                            </div>
+                        )}
+
+                        {/* Edit Button Card */}
+                        {canEdit && (
+                            <Link
+                                href={route('tickets.edit', ticket.id)}
+                                className="block w-full text-center py-3 bg-slate-800 border border-slate-700 text-white rounded-2xl hover:bg-slate-700 transition font-medium"
+                            >
+                                ✏️ Edit Ticket Details
+                            </Link>
+                        )}
+                    </div>
                 </div>
             </div>
-        </div>
+        </AuthenticatedLayout>
     );
 }

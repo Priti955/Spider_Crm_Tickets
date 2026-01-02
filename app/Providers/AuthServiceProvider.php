@@ -17,15 +17,24 @@ class AuthServiceProvider extends ServiceProvider
 
     
     public function boot(): void
-    {
-        $this->registerPolicies();
-        Gate::define('update-ticket', function($user, Ticket $ticket){
+{
+    $this->registerPolicies();
+
+    // The 'before' check runs before any other gate/policy
+    Gate::before(function ($user, $ability) {
+        if ($user->role === 'superadmin') {
+            return true;
+        }
+    });
+
+    //  Only Author can update full ticket details
+    Gate::define('update-ticket', function($user, Ticket $ticket){
         return $user->id === $ticket->created_by;
     });
 
+    //  Only Assignee can update status
     Gate::define('update-status', function($user, Ticket $ticket){
         return $user->id === $ticket->assigned_to;
     });
-   
-    }
+}
 }

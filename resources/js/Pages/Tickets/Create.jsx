@@ -1,101 +1,129 @@
 import React from 'react';
 import { useForm, Link, Head } from '@inertiajs/react';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout'; // <-- Import the Layout
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 
-export default function Create({ auth }) { // <-- Accept the auth prop if needed for layout
+export default function Create({ auth }) {
+    const { data, setData, post, processing, errors } = useForm({
+        name: '',
+        description: '',
+        file: null,
+    });
 
-  const { data, setData, post, processing, errors } = useForm({
-    name: '',
-    description: '',
-    file: null,
-  });
+    function submit(e) {
+        e.preventDefault();
+        post(route('tickets.store'), { 
+            forceFormData: true,
+            onSuccess: () => {
+                // Optional: add any success logic here
+            }
+        });
+    }
 
-  function submit(e) {
-    e.preventDefault();
-    // Setting forceFormData: true is correct for file uploads
-    post(route('tickets.store'), { forceFormData: true });
-  }
+    return (
+        <AuthenticatedLayout
+            user={auth.user}
+            header={
+                <div className="flex items-center gap-4">
+                    <Link href={route('tickets.index')} className="text-slate-400 hover:text-white transition">
+                        🎫 Tickets
+                    </Link>
+                    <span className="text-slate-600">/</span>
+                    <h2 className="text-xl font-semibold text-white">New Submission</h2>
+                </div>
+            }
+        >
+            <Head title="Create Ticket" />
 
-  return (
-    // --- WRAPPER ADDED HERE ---
-    <AuthenticatedLayout
-        user={auth.user}
-        header={<h2 className="text-xl font-semibold leading-tight text-gray-800">Create New Ticket</h2>}
-    >
-        <Head title="Create Ticket" />
+            <div className="max-w-4xl mx-auto py-4">
+                <form onSubmit={submit} className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden">
+                    {/* Header Section */}
+                    <div className="p-8 border-b border-slate-800 bg-slate-800/30">
+                        <h1 className="text-2xl font-bold text-white">Ticket Submission Form</h1>
+                        <p className="text-slate-400 text-sm mt-1">
+                            Fill out the details below to open a new support request.
+                        </p>
+                    </div>
 
-        {/* The main content area of the layout */}
-        <div className="py-12">
-            <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
-                <div className="bg-white p-6 overflow-hidden shadow-sm sm:rounded-lg">
-                
-                    {/* The original content is now placed inside the layout's content area */}
-                    <h1 className="text-3xl font-bold mb-6 text-blue-900">Ticket Submission Form</h1>
-
-                    <form
-                        onSubmit={submit}
-                        // encType is usually handled by Inertia's forceFormData but harmless to keep.
-                        className="bg-white p-6 rounded-lg max-w-2xl mx-auto space-y-4"
-                    >
-                        {/* Name */}
+                    {/* Form Fields */}
+                    <div className="p-8 space-y-6">
+                        {/* Name Input */}
                         <div>
-                            <label className="block mb-1 font-semibold text-blue-800">Name</label>
+                            <label className="block text-sm font-semibold text-slate-300 uppercase tracking-wider mb-2">
+                                Ticket Name / Subject
+                            </label>
                             <input
                                 type="text"
                                 value={data.name}
                                 onChange={e => setData('name', e.target.value)}
-                                className="w-full p-2 rounded border border-blue-300 focus:border-blue-500 focus:ring focus:ring-blue-200"
+                                className={`w-full bg-slate-950 border rounded-xl px-4 py-3 text-slate-200 focus:ring-2 focus:ring-indigo-500 transition-all ${
+                                    errors.name ? 'border-red-500/50 ring-red-500/10' : 'border-slate-700 hover:border-slate-600'
+                                }`}
+                                placeholder="Brief summary of the issue"
                                 required
                             />
-                            {errors.name && <div className="text-red-600 text-sm mt-1">{errors.name}</div>}
+                            {errors.name && <p className="text-red-400 text-xs mt-2 font-medium">{errors.name}</p>}
                         </div>
 
-                        {/* Description */}
+                        {/* Description Input */}
                         <div>
-                            <label className="block mb-1 font-semibold text-blue-800">Description</label>
+                            <label className="block text-sm font-semibold text-slate-300 uppercase tracking-wider mb-2">
+                                Detailed Description
+                            </label>
                             <textarea
                                 value={data.description}
                                 onChange={e => setData('description', e.target.value)}
-                                className="w-full p-2 rounded border border-blue-300 focus:border-blue-500 focus:ring focus:ring-blue-200"
-                                rows={4}
+                                rows={6}
+                                className={`w-full bg-slate-950 border rounded-xl px-4 py-3 text-slate-200 focus:ring-2 focus:ring-indigo-500 transition-all ${
+                                    errors.description ? 'border-red-500/50 ring-red-500/10' : 'border-slate-700 hover:border-slate-600'
+                                }`}
+                                placeholder="Explain the problem in detail so we can help..."
                             />
-                            {errors.description && <div className="text-red-600 text-sm mt-1">{errors.description}</div>}
+                            {errors.description && <p className="text-red-400 text-xs mt-2 font-medium">{errors.description}</p>}
                         </div>
 
-                        {/* File Upload */}
-                        <div>
-                            <label className="block mb-1 font-semibold text-blue-800">Attachment (File)</label>
+                        {/* File Upload Section */}
+                        <div className="p-6 bg-slate-950 border border-slate-800 rounded-xl">
+                            <label className="block text-sm font-semibold text-slate-300 uppercase tracking-wider mb-3">
+                                Attachment (Optional)
+                            </label>
                             <input
                                 type="file"
-                                // Important: We use the second argument of setData for files
                                 onChange={e => setData('file', e.target.files[0])}
-                                className="w-full file:p-2 file:border-0 file:rounded-md file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                className="block w-full text-xs text-slate-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-600/10 file:text-indigo-400 hover:file:bg-indigo-600/20 cursor-pointer transition-all"
                             />
-                            {errors.file && <div className="text-red-600 text-sm mt-1">{errors.file}</div>}
+                            <p className="mt-2 text-[11px] text-slate-500">Supported formats: Images, PDF, Zip (Max 10MB)</p>
+                            {errors.file && <p className="text-red-400 text-xs mt-2">{errors.file}</p>}
                         </div>
+                    </div>
 
-                        {/* Buttons */}
-                        <div className="flex gap-3 pt-6 justify-end">
-                            <Link
-                                href={route('tickets.index')}
-                                className="bg-white border border-gray-400 text-gray-700 hover:bg-gray-100 px-4 py-2 rounded font-semibold transition flex items-center"
-                            >
-                                Cancel
-                            </Link>
-                            <button
-                                type="submit"
-                                disabled={processing}
-                                className={`bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-semibold transition flex items-center ${processing ? 'opacity-75 cursor-not-allowed' : ''}`}
-                            >
-                                {processing ? 'Submitting...' : 'Create Ticket'}
-                            </button>
-                        </div>
-                    </form>
-                    
-                </div>
+                    {/* Action Buttons */}
+                    <div className="p-8 bg-slate-800/30 border-t border-slate-800 flex items-center justify-end gap-4">
+                        <Link
+                            href={route('tickets.index')}
+                            className="text-slate-400 hover:text-white text-sm font-medium transition px-4 py-2"
+                        >
+                            Cancel
+                        </Link>
+                        <button
+                            type="submit"
+                            disabled={processing}
+                            className="px-8 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-500 disabled:opacity-50 transition-all shadow-xl shadow-indigo-600/20 flex items-center gap-2"
+                        >
+                            {processing ? (
+                                <>
+                                    <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Processing...
+                                </>
+                            ) : (
+                                'Create Ticket'
+                            )}
+                        </button>
+                    </div>
+                </form>
             </div>
-        </div>
-    </AuthenticatedLayout>
-    // --- WRAPPER ENDS HERE ---
-  );
+        </AuthenticatedLayout>
+    );
 }
